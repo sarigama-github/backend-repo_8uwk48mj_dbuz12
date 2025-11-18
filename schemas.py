@@ -1,48 +1,31 @@
 """
-Database Schemas
+Database Schemas for Pokemon TCG marketplace
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection. The collection name is the
+lowercased class name (e.g., CardListing -> "cardlisting").
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
-# Example schemas (replace with your own):
+class CardListing(BaseModel):
+    """Listings for vintage/forgotten Pokemon TCG singles and collections"""
+    name: str = Field(..., description="Card name, e.g., 'Charizard' or 'Base Set Lot'")
+    set_name: Optional[str] = Field(None, description="Set name, e.g., 'Base Set', 'Jungle'")
+    year: Optional[int] = Field(None, ge=1996, le=2030, description="Release year")
+    condition: Optional[str] = Field(None, description="Condition descriptor, e.g., LP, NM, HP")
+    rarity: Optional[str] = Field(None, description="Rarity or special tag")
+    language: Optional[str] = Field("EN", description="Card language")
+    price: float = Field(..., ge=0, description="Listing price in USD")
+    images: List[str] = Field(default_factory=list, description="Image URLs")
+    description: Optional[str] = Field(None, description="Short description of the item")
+    is_collection: bool = Field(False, description="True if this is a multi-card lot/collection")
+    featured: bool = Field(False, description="Whether to highlight on homepage")
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
+class Inquiry(BaseModel):
+    """Buyer/Seller inquiry form submissions"""
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
-
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    email: str = Field(..., description="Contact email")
+    intent: str = Field(..., description="'buy' or 'sell'")
+    message: str = Field(..., description="Details about what they want to buy/sell")
+    target_listing_id: Optional[str] = Field(None, description="If referencing a specific listing")
